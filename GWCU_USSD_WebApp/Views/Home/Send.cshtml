@@ -1,0 +1,267 @@
+﻿@model GWCU_USSD_WebApp.ViewModels.SmsViewModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<label>Message</label>
+<textarea name="Message" id="message" class="form-control"></textarea>
+<input type="checkbox" name="All" id="All" title="All" class="m-1" />Send To All
+<div class="row">
+    <input type="button" id="btnsend" class="btn btn-primary float-right m-2 ml-3" value="Send" />
+    <input type="button" id="btnsendWelcome" class="btn btn-success float-right m-2" value="Welcome SMS" />
+    <input type="button" id="btnsendBorrow" class="btn btn-warning float-right m-2" value="Borrow More" />
+    <input type="button" id="btnsendReferral" class="btn btn-info float-right m-2" value="Referral Button-Unilorin" />
+</div>
+
+<div class="row">
+
+    <div class="mt-4 col-lg 6">
+        <table id="usertable" class="table col-lg-4" title="Transactions Table" cellspacing="0">
+            <thead>
+                <tr>
+                    <td>check</td>
+                    <td>Id</td>
+                    <td>Username</td>
+                    <td>First Name</td>
+                    <td>Last Name</td>
+                    <td>Phone Number</td>
+                    <td>Institution</td>
+                    <td>Ipposi No</td>
+                </tr>
+            </thead>
+
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+
+<script src="~/Scripts/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var table2 = $('#usertable').dataTable();
+        var numbers = [];
+
+        var i = 0;
+
+    var rows_selected2 = [];
+        $("#usertable").dataTable().fnDestroy();
+        $("#usertable").dataTable({
+            select: {
+                style: 'single'
+            },
+            "ajax": {
+                "url": "@Url.Action("GetUsersIn","Home")",
+                "method": "GET",
+                "dataType": "JSON",
+                "dataSrc": ""
+            },
+            columnDefs: [
+                {
+                    targets: 0,
+                    'searchable': false,
+                    'orderable': false,
+                    'width': '1%',
+                    'render': function(data, type, full, meta) {
+                        return '<input type="checkbox">';
+                    },
+                    checkboxes: {
+                        selectRow: true
+                    }
+                },
+            ],
+            order: [[1, 'asc']],
+
+            "columns": [
+                { "data": "" },
+                { "data": "UserId" },
+                { "data": "UserName" },
+                { "data": "FirstName" },
+                { "data": "LastName" },
+                { "data": "Phone" },
+                { "data": "Institution" },
+                { "data": "ipposi" }
+            ]
+        });
+
+        $('#usertable').on('click',
+            'tbody td, thead th:first-child',
+            function(e) {
+                //alert("sss");
+                if (this.checked) {
+                    $('#usertable tbody input[type="checkbox"]:not(:checked)').trigger('click');
+                } else {
+                    $('#usertable tbody input[type="checkbox"]:checked').trigger('click');
+                }
+
+                // Prevent click event from propagating to parent
+                e.stopPropagation();
+            });
+        $('#usertable tbody').on('click',
+            'input[type="checkbox"]',
+            function(e) {
+
+                // Get row data
+                var $row = $(this).closest('tr');
+                var data = table2.fnGetData($row[0]);
+                var rowId = data.Phone;
+                var name = data.Name;
+// Determine whether row ID is in the list of selected row IDs
+                var index = $.inArray(rowId, rows_selected2);
+
+                // If checkbox is checked and row ID is not in list of selected row IDs
+                if (this.checked && index === -1) {
+                    rows_selected2.push(rowId);
+
+
+                    // Otherwise, if checkbox is not checked and row ID is in list of selected row IDs
+                } else if (!this.checked && index !== -1) {
+                    rows_selected2.splice(index, 1);
+
+                }
+                if (this.checked) {
+                    $row.addClass('selected');
+
+                    numbers.push(rowId);
+                    //alert(numbers);
+
+                } else {
+                    $row.removeClass('selected');
+                    numbers.pop(rowId);
+                    //alert(numbers);
+
+                }
+
+                // Update state of "Select all" control
+                //updateDataTableSelectAllCtrl(table);
+
+                // Prevent click event from propagating to parent
+                e.stopPropagation();
+                $('#AreaId').val(rows_selected2);
+
+                $('#AreaName').val(name);
+            });
+
+        // Handle click on table cells with checkboxes
+        $('#tblArea').on('click',
+            'tbody td, thead th:first-child',
+            function(e) {
+                $(this).parent().find('input[type="checkbox"]').trigger('click');
+
+            });
+
+        $("#btnsend").click(function(e) {
+            var all = document.getElementById("All").checked;
+            if (all) {
+                $.ajax({
+                    async: false,
+                    type: "POST",
+                    global: false,
+                    dataType: 'json',
+                    url: '@Url.Action("Send", "Home")',
+                    data: { 'all': 'all', 'message': $("#message").val() },
+                    success: function(data) {
+                        if (data) {
+                            alert("Message sent successfully");
+                            window.location.reload();
+                        } else {
+                            alert("Something is wrong");
+                        }
+
+                    }
+                });
+            } else {
+                $.ajax({
+                    async: false,
+                    type: "POST",
+                    global: false,
+                    dataType: 'json',
+                    url: '@Url.Action("Send", "Home")',
+                    data: { 'list': rows_selected2,'message': $("#message").val()},
+                    success: function(data)
+                    {
+                        if (data) {
+                            alert("Message sent successfully");
+                            window.location.reload();
+                        } else {
+                            alert("Something is wrong");
+                        }
+
+                    }
+                });
+            }
+
+            });
+
+            $("#btnsendWelcome").click(function (e) {
+                var isall = document.getElementById("All").checked;
+                debugger;
+                $.ajax({
+                    async: false,
+                    type: "POST",
+                    global: false,
+                    dataType: 'json',
+                    url: '@Url.Action("Send_SMS", "Home")',
+                    data: { '_list': rows_selected2, 'messagetype': 'welcome', 'isall': isall == false ? '' : 'all',  },
+                    success: function(data) {
+                        if (data) {
+                            alert("Message sent successfully");
+                            window.location.reload();
+                        } else {
+                            alert("Something is wrong");
+                        }
+
+                    }
+                });
+            });
+
+            $("#btnsendBorrow").click(function (e) {
+                var isall = document.getElementById("All").checked;
+
+                $.ajax({
+                    async: false,
+                    type: "POST",
+                    global: false,
+                    dataType: 'json',
+                    url: '@Url.Action("Send_SMS", "Home")',
+                    data: { '_list': rows_selected2, 'isall': isall == false ? '' : 'all', 'messagetype': 'borrow' },
+                    success: function(data) {
+                        if (data) {
+                            alert("Message sent successfully");
+                            window.location.reload();
+                        } else {
+                            alert("Something is wrong");
+                        }
+
+                    }
+                });
+            });
+
+            $("#btnsendReferral").click(function (e) {
+                var isall = document.getElementById("All").checked;
+
+                $.ajax({
+                    async: false,
+                    type: "POST",
+                    global: false,
+                    dataType: 'json',
+                    url: '@Url.Action("Send_SMS", "Home")',
+                    data: { '_list': rows_selected2, 'isall': isall == false ? '' : 'all', 'messagetype': 'referral' },
+                    success: function(data) {
+                        if (data) {
+                            alert("Message sent successfully");
+                            window.location.reload();
+                        } else {
+                            alert("Something is wrong");
+                        }
+
+                    }
+                });
+            });
+        });
+
+</script>

@@ -1,0 +1,182 @@
+﻿@{
+    ViewBag.Title = "Requests";
+}
+<div class="jumbotron">
+    <h1>Requests</h1>
+    <p class="lead">Here, you can view requests made by users over time</p>
+    <p class="mt-2"><button class="btn btn-primary" onclick="$('.buttons-csv').click()">Download as CSV</button></p>
+</div>
+<div class="table-responsive mt-4">
+    <table id="RequestsTable" class="table table-bordered table-hover" title="Requests Table" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Amount</th>
+                <th>Interest Rate</th>
+                <th>Payback Period</th>
+                <th>Bank Name</th>
+                <th>Account No</th>
+                <th>Date/Time</th>
+                <th>Age</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- Modal ApproveRequest-->
+<div class="modal fade" id="refModal" tabindex="-1" role="dialog" aria-labelledby="refModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Is it Top up? Reference No. Mandatory!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="refform">
+                    <input type="hidden" id="RequestID" />
+                    <div class="form-group">
+                        <label for="reference">Please input Cheque/Reference:</label> <em class="text-danger">*</em>
+                        <input type="text" class="form-control" id="Reference" value="" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-danger"
+                        form="refform" id="refNo" onclick="SaveApproveRequest(event, false)">
+                    No
+                </button>
+
+                <button type="submit" class="btn btn-success"
+                        form="refform" id="refYes" onclick="SaveApproveRequest(event, true)">
+                    Yes, Top up
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var requestsTable;
+    $(document).ready(function () {
+        debugger;
+        requestsTable = $("#RequestsTable").DataTable({
+            "dom": "<'row'<'d-none'B><'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            "processing": true,
+            "serverSide": true,
+            "filter": true,
+            "orderMulti": false,
+            "pageLength": 50,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "order": [[0, "desc"]],
+            "buttons": ['csvHtml5'],
+            "ajax": {
+                "url": "GetRequests",
+                "type": "POST",
+                "datatype": "json"
+            },
+
+            "columnDefs":
+                [{
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
+            "columns": [
+                { "data": "RequestID" },
+                { "data": "FullName" },
+                { "data": "Amount" },
+                { "data": "InterestRate" },
+                { "data": "PaybackPeriod" },
+                { "data": "BankAccount" },
+                { "data": "AccountNo" },
+                { "data": "DateTime" },
+                { "data": "yearDob" },
+                {
+                    data: null, render: function (data, type, row) {
+                        return row.IsApproved
+                            ? '<span class="badge badge-success">Approved</span>'
+                            : '<span class="badge badge-warning">Not Approved</span>'
+                    }
+                },
+                {
+                    data: null, render: function (data, type, row) {
+                        var approveButton = !row.IsApproved ? `<button class="btn btn-sm btn-primary" onclick="ApproveRequest(` + row.RequestID + `)">Approve</button>` : ''
+                        //var approvedButton = row.IsApproved ? `<button class="btn btn-sm btn-warning" onclick="LoanTopUp(` + row.RequestID + `)">LoanTopUp</button>` : ''
+
+                        return `
+                                <div class="btn-group">
+                                `+ approveButton + `
+                                <button class="btn btn-sm btn-danger" onclick="DeleteRequest(`+ row.RequestID + `)">Delete</button>
+                                </div>
+                                `
+                    }
+                },
+
+            ]
+
+        });
+    });
+
+    function DeleteRequest(RequestID) {
+        var response = confirm("Are you sure you want to delete this request?")
+        if (response == true) {
+            $.ajax({
+                url: 'DeleteRequest',
+                data: {
+                    "RequestID": RequestID
+                },
+                success: () => {
+                    requestsTable.ajax.reload()
+                }
+            })
+        }
+    }
+
+    function ApproveRequest(RequestID) {
+        $('#refModal').modal({ backdrop: 'static', keyboard: false }).on('shown.bs.modal', function () { $('#reference').focus() });
+        document.getElementById("RequestID").value = RequestID;
+    }
+
+    function SaveApproveRequest(event, IsTopUp) {
+        event.preventDefault();
+        var RequestID = document.getElementById("RequestID").value;
+        var Reference = document.getElementById("Reference").value;
+        if (RequestID != null && Reference != null) {
+            $.ajax({
+                url: 'ApproveRequest',
+                data: {
+                    "RequestID": RequestID,
+                    "Reference": Reference,
+                    "IsTopUp": IsTopUp
+                },
+                success: () => {
+                    document.getElementById("refform").reset();
+                    $('#refModal').modal('hide')
+                    requestsTable.ajax.reload()
+                }
+            })
+        }
+    }
+
+    //function LoanTopUp(RequestID) {
+    //    var response = prompt("Please input Reference #:")
+    //    if (response != null) {
+    //        $.ajax({
+    //            url: 'LoanTopUp',
+    //            data: {
+    //                "RequestID": RequestID,
+    //                "Reference": response
+    //            },
+    //            success: () => {
+    //                requestsTable.ajax.reload()
+    //            }
+    //        })
+    //    }
+    //}
+
+</script>

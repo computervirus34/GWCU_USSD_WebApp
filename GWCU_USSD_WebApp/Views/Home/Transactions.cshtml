@@ -1,0 +1,136 @@
+﻿@{
+    ViewBag.Title = "Transactions";
+}
+<div class="jumbotron">
+    <h1>Transactions</h1>
+    <p class="lead">Here, you can view and manage transactions made on the system</p>
+    <p class="mt-2"><button class="btn btn-primary" onclick="$('.buttons-csv').click()">Download as CSV</button></p>
+</div>
+<div class="table-responsive mt-4">
+    <table id="TransactionsTable" class="table table-bordered table-hover" title="Transactions Table" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>IPPIS No</th>
+                <th>Institution</th>
+                <th>Reference No.</th>
+                <th>Top Up</th>
+                <th>Debit</th>
+                <th>Credit</th>
+                <th>Balance</th>
+                <th>Payback Period</th>
+                <th>Amount to be Paid</th>
+                <th>Amount to be Earned</th>
+                <th>Amount Disbursed</th>
+                <th>Time Period</th>
+                <th>Interest Rate</th>
+                <th>Bank Name</th>
+                <th>Account Number</th>
+                <th>Date/Time</th>
+                <th>Requested On</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+<script>
+    var transactionsTable;
+    $(document).ready(function () {
+        debugger;
+        transactionsTable = $("#TransactionsTable").DataTable({
+            "dom": "<'row'<'d-none'B><'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>><'row'<'col-sm-12'tr>><'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            "processing": true,
+            "serverSide": true,
+            "filter": true,
+            "orderMulti": false,
+            "pageLength": 50,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "order": [[0, "desc"]],
+            "buttons": ['csvHtml5'],
+            "ajax": {
+                "url": "GetTransactions",
+                "type": "POST",
+                "datatype": "json"
+            },
+
+            "columnDefs":
+                [{
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
+            "columns": [
+                { "data": "TransactionID" },
+                { "data": "FullName" },              
+                { "data": "ipposi" },
+                { "data": "Institution" },
+                { "data": "ReferenceNo" },
+                { "data": "IsTopUP" },
+                { "data": "Debit" },
+                { "data": "Credit" },
+                { "data": "Balance" },
+                { "data": "PaybackPeriods" },
+                { "data": "AmountToBePaid" },
+                { "data": "AmountEarned" },
+                { "data": "AmountDisbursed" },
+                { "data": "TimePeriod" },
+                { "data": "InterestRate" },
+                { "data": "BankName" },
+                { "data": "AccountNumber" },
+                { "data": "DateTime" },
+                { "data": "RequestDateTime" },
+                {
+                    data: null, render: function (data, type, row) {
+                        var reverseOption = !row.IsReversed ? `<button class="btn btn-sm btn-primary" onclick="ReverseTransaction(` + row.TransactionID + `)">Reverse</button>` : ''
+                        return `
+                                <div class="btn-group">
+                                    `+ reverseOption + `
+                                    <button class="btn btn-sm btn-danger" onclick="DeleteTransaction(`+ row.TransactionID + `)">Delete</button>
+                                    <button class="btn btn-sm btn-danger" onclick="Pdf(`+ row.TransactionID + `)">Pdf</button>
+                                </div>
+                            `
+                    }
+                },
+
+            ]
+
+        });
+    });
+
+    function ReverseTransaction(TransactionID) {
+        var response = confirm("Are you sure you want to reverse this transaction?")
+        if (response == true) {
+            $.ajax({
+                url: 'ReverseTransaction',
+                data: {
+                    "TransactionID": TransactionID
+                },
+                success: () => {
+                    transactionsTable.ajax.reload()
+                }
+            })
+        }
+    }
+
+    function DeleteTransaction(TransactionID) {
+        var response = confirm("Are you sure you want to delete this transaction?")
+        if (response == true) {
+            $.ajax({
+                url: 'DeleteTransaction',
+                data: {
+                    "TransactionID": TransactionID
+                },
+                success: () => {
+                    transactionsTable.ajax.reload();
+                }
+            })
+        }
+    }
+
+    function Pdf(TransactionID) {
+        window.open("/home/Pdf/" + TransactionID, '_blank');
+
+    }
+</script>

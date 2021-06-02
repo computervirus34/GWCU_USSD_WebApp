@@ -1,0 +1,133 @@
+﻿@{
+    ViewBag.Title = "Users";
+}
+<div class="jumbotron">
+    <h1>Users</h1>
+    <p class="lead">Here, you can view user information, activate/de-active and/or delete user(s)</p>
+    <a class="btn btn-primary" href="@Url.Action("UserForm")">Add New User</a>
+    <hr />
+    <div class="mt-4">
+        <form action="@Url.Action("ImportUsers")" method="post" enctype="multipart/form-data">
+            <input class="form-control col-6" type="file" name="File" required />
+            <input class="btn btn-primary mt-1" type="submit" value="Import Users from CSV" />
+        </form>
+    </div>
+</div>
+<div class="table-responsive mt-4">
+    <table id="UsersTable" class="table table-bordered table-hover" title="Users Table" width="100%" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Institution</th>
+                <th>ippis no</th>
+                <th>Credit Limit</th>
+                <th>Credit Utilized</th>
+                <th>Credit Available</th>
+                <th>Interest Rates</th>
+                <th>Payback Periods</th>
+                <th>Age</th>
+                <th>Account Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+<script>
+    var usersTable;
+    $(document).ready(function () {
+        usersTable = $("#UsersTable").DataTable({
+            "processing": true,
+            "serverSide": true,
+            "filter": true,
+            "orderMulti": false,
+            "pageLength": 50,
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+            "order": [[0, "desc"]],
+
+            "ajax": {
+                "url": "GetUsers",
+                "type": "POST",
+                "datatype": "json"
+            },
+
+            "columnDefs":
+                [{
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
+            "columns": [
+                { "data": "UserID" },
+                { "data": "FirstName" },
+                { "data": "LastName" },
+                { "data": "Institution" },
+                { "data": "ipposi" },
+                { "data": "CreditLimit" },
+                { "data": "CreditUtilized" },
+                { "data": "CreditAvailable" },
+                { "data": "InterestRates" },
+                { "data": "PaybackPeriods" },
+                { "data": "yearDob" },
+                {
+                    data: null, render: function (data, type, row) {
+                        return row.IsAccountEnabled
+                            ? '<span class="badge badge-success">Active</span>'
+                            : '<span class="badge badge-warning">De-Active</span>'
+                    }
+                },
+                {
+                    data: null, render: function (data, type, row) {
+                        var opt_string = row.IsAccountEnabled ? "De-Activate" : "Activate"
+                        return `
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
+                                    Options
+                                </button>
+                                <div class="dropdown-menu">
+                                    <button class="dropdown-item" onclick="EditUser(`+ row.UserID + `)">Edit</button>
+                                    <button class="dropdown-item" onclick="ToggleUser(`+ row.UserID + `)">` + opt_string + `</button>
+                                    <button class="dropdown-item" onclick="DeleteUser(`+ row.UserID + `)">Delete</button>
+                                </div>
+                            </div>`;
+                    }
+                },
+
+            ]
+
+        });
+    });
+
+    function EditUser(UserID) {
+        window.location = 'UserForm?UserID=' + UserID
+    }
+
+    function ToggleUser(UserID) {
+        $.ajax({
+            url: 'ToggleUser',
+            data: {
+                "UserID": UserID
+            },
+            success: () => {
+                usersTable.ajax.reload()
+            }
+        })
+    }
+
+    function DeleteUser(UserID) {
+        var response = confirm("Are you sure you want to delete this user?")
+        if (response == true) {
+            $.ajax({
+                url: 'DeleteUser',
+                data: {
+                    "UserID": UserID
+                },
+                success: () => {
+                    usersTable.ajax.reload()
+                }
+            })
+        }
+    }
+</script>

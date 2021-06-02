@@ -1,0 +1,127 @@
+﻿@model GWCU_USSD_WebApp.Models.User
+<div class="jumbotron">
+    @if (Model.UserID == 0)
+    {
+        <h1>Add User</h1>
+    }
+    else
+    {
+        <h1>Edit User</h1>
+    }
+    <form method="post" action="@Url.Action("SaveUser")">
+        <div class="row">
+            <div class="form-group col-sm-6">
+                <label>Username</label>
+                <input class="form-control" value="@Model.UserID" name="UserID" hidden>
+                @if (ViewBag.UsernameExists == true)
+                {
+                    <small class="form-text text-danger">The username already exists in the system. Please try a different one!</small>
+
+                }
+                @{
+                    if (Model.UserID == 0)
+                    {
+                        <input class="form-control" value="@Model.Username" name="Username" required>
+                    }
+                    else
+                    {
+                        <input class="form-control" value="@Model.Username" name="Username" readonly required>
+                    }
+                }
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Password</label>
+                <input class="form-control" name="Password">
+                <input name="PasswordHash" value="@Model.PasswordHash" hidden />
+                <small class="form-text text-muted">Make sure you copy it somewhere before you update it. Leave it empty if you dont want to update it!</small>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Phone Number</label>
+                <input class="form-control" name="PhoneNumber" type="tel" value="@Model.PhoneNumber">
+            </div>
+            <div class="form-group col-sm-6">
+                <label>First Name</label>
+                <input class="form-control" name="FirstName" value="@Model.FirstName" required>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Last Name</label>
+                <input class="form-control" name="LastName" value="@Model.LastName" required>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Credit Limit</label>
+                <input class="form-control" name="CreditLimit" value="@Model.CreditLimit" required>
+            </div>
+            @*<div class="form-group col-sm-6">
+                    <label>Credit Available</label>
+                    <input class="form-control" name="CreditAvailable" value="@Model.CreditAvailable" required>
+                </div>*@
+            <div class="form-group col-sm-6">
+                <label>Credit Utilized</label>
+                <input class="form-control" name="CreditUtilized" value="@Model.CreditUtilized" required>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Interest Rates</label>
+                <input class="form-control" id="InterestRates" name="InterestRates" value="@Model.InterestRates" required>
+                <small class="form-text text-muted">Put all values (in %) separated by commas (e.g. 5,10,15)</small>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Payback Periods</label>
+                <input class="form-control" id="PaybackPeriods" name="PaybackPeriods" value="@Model.PaybackPeriods" required>
+                <small class="form-text text-muted">Put all values (in months) separated by commas (e.g. 3,6,12)</small>
+                <small id="IRError" class="form-text text-danger" style="display:none">Interest values should be equals in count with Payback periods</small>
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Bank Account 1: Name</label>
+                <input class="form-control" name="UserBanks[0].BankName" value="@Model.UserBanks.ToArray()[0].BankName" required>
+                <label>Bank Account 1: Account Number</label>
+                <input class="form-control" name="UserBanks[0].AccountNumber" value="@Model.UserBanks.ToArray()[0].AccountNumber" required>
+                <input name="UserBanks[0].UserBankID" value="@Model.UserBanks.ToArray()[0].UserBankID" hidden />
+                <input name="UserBanks[0].UserID" value="@Model.UserBanks.ToArray()[0].UserID" hidden />
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Bank Account 2: Name</label>
+                <input class="form-control" name="UserBanks[1].BankName" value="@Model.UserBanks.ToArray()[1].BankName" required>
+                <label>Bank Account 2: Account Number</label>
+                <input class="form-control" name="UserBanks[1].AccountNumber" value="@Model.UserBanks.ToArray()[1].AccountNumber" required>
+                <input name="UserBanks[1].UserBankID" value="@Model.UserBanks.ToArray()[1].UserBankID" hidden />
+                <input name="UserBanks[1].UserID" value="@Model.UserBanks.ToArray()[1].UserID" hidden />
+            </div>
+
+            <div class="form-group col-sm-6">
+                <label>Institution :</label>
+                <input class="form-control" name="Institution" value="@Model.Institution" required="">
+                <label>ipposi no</label>
+                <input class="form-control" name="ipposi" value="@Model.ipposi" required="">
+            </div>
+            <div class="form-group col-sm-6">
+                <label>Date of Birth :</label>
+                <input type="datetime-local" class="form-control" id="dob" name="dob" value="@string.Format("{0:yyyy-MM-ddThh:mm}", @Model.dob)" required="">
+            </div>
+
+            @if (Model.UserID != 0)
+            {
+                var status = Model.IsAccountEnabled ? "Active" : "De-Active";
+                var statusClass = Model.IsAccountEnabled ? "badge-success" : "badge-warning";
+                <div class="form-group form-check col-sm-6">
+                    @Html.CheckBoxFor(d => d.IsAccountEnabled, new { @hidden = true })
+                    <label class="form-check-label">Active Status: </label>
+                    <span class="badge @statusClass">@status</span>
+                </div>
+            }
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <a href="@Url.Action("Users")" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+<script>
+    
+    $('button[type="submit"]').click(function (e) {
+        $('#IRError').hide()
+        if ($('#InterestRates').val().split(',').length != $('#PaybackPeriods').val().split(',').length) {
+            $('#IRError').show()
+            e.preventDefault();
+            return false;
+        }
+        else $('form').submit()
+    })
+</script>
