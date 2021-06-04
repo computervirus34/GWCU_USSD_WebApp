@@ -30,6 +30,7 @@ namespace GWCU_USSD_WebApp.Controllers
             if (IsLoginValid(model.Username, model.Password, model.SecretKey))
             {
                 FormsAuthentication.SetAuthCookie(model.Username, false);
+                Session["UserRole"] = GetUserRole(model.Username);
                 return Redirect("/Home");
             }
             else
@@ -49,8 +50,11 @@ namespace GWCU_USSD_WebApp.Controllers
         {
             return AppSettings.Admins.FirstOrDefault(d => d.Username.Equals(username) && d.Password.Equals(password) && d.SecretKey.Equals(secretKey)) != null;
         }
-
-public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
+        public string GetUserRole(string username)
+        {
+            return AppSettings.Admins.FirstOrDefault(d => d.Username.Equals(username)).UserRole;
+        }
+        public AccountController(ApplicationUserManager userManager, ApplicationSignInManager signInManager )
         {
             UserManager = userManager;
             SignInManager = signInManager;

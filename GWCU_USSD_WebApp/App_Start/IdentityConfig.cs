@@ -84,6 +84,7 @@ namespace GWCU_USSD_WebApp
                 manager.UserTokenProvider = 
                     new DataProtectorTokenProvider<ApplicationUser>(dataProtectionProvider.Create("ASP.NET Identity"));
             }
+            //manager.AddToRole()
             return manager;
         }
     }

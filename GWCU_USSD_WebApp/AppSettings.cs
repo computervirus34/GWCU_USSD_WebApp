@@ -18,7 +18,15 @@ namespace GWCU_USSD_WebApp
                     {
                         Username = "GWCU",
                         Password = "FuZoRL77",
-                        SecretKey = "MjsnbC6j"
+                        SecretKey = "MjsnbC6j",
+                        UserRole = "Admin"
+                    },
+                    new AdminUserViewModel
+                    {
+                        Username = "abcd",
+                        Password = "abcd",
+                        SecretKey = "abcd",
+                        UserRole = "Sub-admin"
                     }
                 };
             }

@@ -15,5 +15,6 @@ namespace GWCU_USSD_WebApp.Models
         [Display(Name ="Secret Key")]
         [Required(ErrorMessage = "SecretKey field is required")]
         public string SecretKey { get; set; }
+        public string UserRole { get; set; }
     }
 }
